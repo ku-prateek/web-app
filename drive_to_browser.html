@@ -5,9 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Render HTML from Google Drive</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
         #output { margin-top: 20px; border: 1px solid #ccc; padding: 20px; min-height: 300px; }
         #drive-link { width: 100%; padding: 10px; margin-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        img, video { max-width: 200px; max-height: 200px; }
     </style>
 </head>
 <body>
@@ -33,7 +37,6 @@
                 return;
             }
             
-            // Updated URL to use the export download link
             const fileUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
             
             outputDiv.innerHTML = 'Loading...';
@@ -43,14 +46,35 @@
                 if (!response.ok) throw new Error('Network response failed');
                 
                 const data = await response.text();
-                const iframe = document.createElement('iframe');
-                iframe.srcdoc = data;
-                iframe.style.width = '100%';
-                iframe.style.height = '500px';
-                iframe.style.border = '1px solid #ccc';
-                
                 outputDiv.innerHTML = '';
-                outputDiv.appendChild(iframe);
+                
+                // Create a temporary div to parse HTML
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = data;
+                
+                // Find the table
+                const table = tempDiv.querySelector('table');
+                
+                if (table) {
+                    // Ensure media sources use HTTPS
+                    const imgs = table.querySelectorAll('img');
+                    imgs.forEach(img => {
+                        if (img.src && !img.src.startsWith('https:')) {
+                            img.src = img.src.replace('http:', 'https:');
+                        }
+                    });
+                    
+                    const videos = table.querySelectorAll('video source');
+                    videos.forEach(video => {
+                        if (video.src && !video.src.startsWith('https:')) {
+                            video.src = video.src.replace('http:', 'https:');
+                        }
+                    });
+                    
+                    outputDiv.appendChild(table);
+                } else {
+                    outputDiv.textContent = 'No table found in the HTML';
+                }
             } catch (err) {
                 outputDiv.innerHTML = `Error: ${err.message}`;
                 console.error(err);
@@ -58,7 +82,6 @@
         }
         
         function extractFileId(link) {
-            // Specific regex for the /file/d/{fileId}/view format
             const regex = /\/file\/d\/([a-zA-Z0-9_-]+)\//;
             const match = link.match(regex);
             return match ? match[1] : null;

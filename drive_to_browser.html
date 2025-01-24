@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Render HTML from Google Drive or Upload File</title>
+    <title>Render HTML from Google Drive</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -18,25 +18,18 @@
     </style>
 </head>
 <body>
-    <h1>Render HTML from Google Drive or Upload File</h1>
-    
+    <h1>Render HTML from Google Drive</h1>
     <label for="drive-link">Enter Google Drive HTML file link:</label>
     <input type="text" id="drive-link" placeholder="Paste your Google Drive HTML file link here" style="width: 100%; padding: 10px;">
-    <button onclick="loadHtmlFromDrive()">Render HTML from Drive</button>
-    
-    <br><br>
-    
-    <label for="upload-file">Or upload an HTML file:</label>
-    <input type="file" id="upload-file" accept=".html" style="padding: 10px;">
-    <button onclick="loadHtmlFromFile()">Render HTML from File</button>
+    <button onclick="loadHtml()">Render HTML</button>
 
     <div id="output">
         <!-- HTML content will be rendered here -->
     </div>
 
     <script>
-        // Function to load HTML from Google Drive link
-        function loadHtmlFromDrive() {
+        function loadHtml() {
+            // Get the Google Drive file link
             let driveLink = document.getElementById('drive-link').value;
 
             if (!driveLink) {
@@ -52,10 +45,10 @@
                 return;
             }
 
-            // Construct the URL to fetch the HTML file in a downloadable format
-            let fileUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+            // Construct the URL to fetch the HTML file in downloadable format
+            let fileUrl = `https://drive.google.com/uc?id=${fileId}&export=download`;
 
-            // Fetch the file content
+            // Fetch the file content as text
             fetch(fileUrl)
                 .then(response => response.text())
                 .then(data => {
@@ -68,33 +61,8 @@
                 });
         }
 
-        // Function to load HTML from the uploaded file
-        function loadHtmlFromFile() {
-            let fileInput = document.getElementById('upload-file');
-            let file = fileInput.files[0];
-
-            if (!file) {
-                alert('Please upload an HTML file!');
-                return;
-            }
-
-            let reader = new FileReader();
-
-            reader.onload = function(event) {
-                let fileContent = event.target.result;
-                document.getElementById('output').innerHTML = fileContent;
-            }
-
-            reader.onerror = function(error) {
-                console.error('Error reading the file:', error);
-                alert('Failed to load the uploaded HTML content.');
-            }
-
-            reader.readAsText(file);
-        }
-
-        // Function to extract the file ID from the Google Drive link
         function extractFileId(link) {
+            // Regular expression to extract file ID from the Google Drive link
             const regex = /(?:drive|file|doc)\/d\/([a-zA-Z0-9_-]+)(?:\/|$)/;
             const match = link.match(regex);
             return match ? match[1] : null;

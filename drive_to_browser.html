@@ -5,65 +5,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Render HTML from Google Drive</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-        }
-        #output {
-            margin-top: 20px;
-            border: 1px solid #ccc;
-            padding: 20px;
-            min-height: 300px;
-        }
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        #output { margin-top: 20px; border: 1px solid #ccc; padding: 20px; min-height: 300px; }
+        #drive-link { width: 100%; padding: 10px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
     <h1>Render HTML from Google Drive</h1>
     <label for="drive-link">Enter Google Drive HTML file link:</label>
-    <input type="text" id="drive-link" placeholder="Paste your Google Drive HTML file link here" style="width: 100%; padding: 10px;">
+    <input type="text" id="drive-link" placeholder="Paste your Google Drive HTML file link here">
     <button onclick="loadHtml()">Render HTML</button>
-
-    <div id="output">
-        <!-- HTML content will be rendered here -->
-    </div>
+    <div id="output"></div>
 
     <script>
-        function loadHtml() {
-            // Get the Google Drive file link
-            let driveLink = document.getElementById('drive-link').value;
-
+        async function loadHtml() {
+            const outputDiv = document.getElementById('output');
+            const driveLink = document.getElementById('drive-link').value.trim();
+            
             if (!driveLink) {
                 alert('Please enter a Google Drive link!');
                 return;
             }
-
-            // Extract the file ID from the Google Drive link
-            let fileId = extractFileId(driveLink);
-
+            
+            const fileId = extractFileId(driveLink);
             if (!fileId) {
                 alert('Invalid Google Drive link!');
                 return;
             }
-
-            // Construct the URL to fetch the HTML file in downloadable format
-            let fileUrl = `https://drive.google.com/uc?id=${fileId}&export=download`;
-
-            // Fetch the file content as text
-            fetch(fileUrl)
-                .then(response => response.text())
-                .then(data => {
-                    // Render the HTML content inside the output div
-                    document.getElementById('output').innerHTML = data;
-                })
-                .catch(err => {
-                    console.error('Error fetching the file:', err);
-                    alert('Failed to load the HTML content.');
-                });
+            
+            // Updated URL to use the export download link
+            const fileUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+            
+            outputDiv.innerHTML = 'Loading...';
+            
+            try {
+                const response = await fetch(fileUrl);
+                if (!response.ok) throw new Error('Network response failed');
+                
+                const data = await response.text();
+                const iframe = document.createElement('iframe');
+                iframe.srcdoc = data;
+                iframe.style.width = '100%';
+                iframe.style.height = '500px';
+                iframe.style.border = '1px solid #ccc';
+                
+                outputDiv.innerHTML = '';
+                outputDiv.appendChild(iframe);
+            } catch (err) {
+                outputDiv.innerHTML = `Error: ${err.message}`;
+                console.error(err);
+            }
         }
-
+        
         function extractFileId(link) {
-            // Regular expression to extract file ID from the Google Drive link
-            const regex = /(?:drive|file|doc)\/d\/([a-zA-Z0-9_-]+)(?:\/|$)/;
+            // Specific regex for the /file/d/{fileId}/view format
+            const regex = /\/file\/d\/([a-zA-Z0-9_-]+)\//;
             const match = link.match(regex);
             return match ? match[1] : null;
         }

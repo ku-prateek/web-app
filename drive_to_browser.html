@@ -45,8 +45,8 @@
                 return;
             }
 
-            // Construct the URL to fetch the HTML file
-            let fileUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+            // Construct the URL to fetch the HTML file in a downloadable format
+            let fileUrl = `https://drive.google.com/uc?id=${fileId}&export=download`;
 
             // Fetch the file content
             fetch(fileUrl)
